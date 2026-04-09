@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台灣連鎖優惠雷達</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: #2a2a3a;
+    --accent: #ff4d6d;
+    --accent2: #ffd166;
+    --accent3: #06d6a0;
+    --accent4: #4cc9f0;
+    --text: #e8e8f0;
+    --text-dim: #7a7a9a;
+    --food: #ff6b35;
+    --fashion: #e040fb;
+    --living: #4fc3f7;
+    --transport: #69f0ae;
+    --edu: #ffab40;
+    --fun: #f06292;
+    --dept: #ce93d8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
+
+  /* Header */
+  header {
+    padding: 2rem 2rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    gap: 2rem;
+    flex-wrap: wrap;
+    position: relative;
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 200px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+  }
+
+  .logo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .logo-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .logo h1 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .logo h1 span {
+    color: var(--accent);
+  }
+
+  .header-meta {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
+
+  .month-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+  }
+
+  .month-badge strong { color: var(--accent2); }
+
+  /* Search bar */
+  .search-bar {
+    padding: 1rem 2rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .search-input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .search-input-wrap input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.6rem 1rem 0.6rem 2.5rem;
+    border-radius: 6px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-input-wrap input:focus {
+    border-color: var(--accent);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+
+  /* Category tabs */
+  .cat-tabs {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .cat-tab {
+    padding: 0.4rem 0.9rem;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .cat-tab:hover { border-color: var(--text-dim); color: var(--text); }
+  .cat-tab.active { border-color: currentColor; background: rgba(255,255,255,0.05); }
+  .cat-tab[data-cat="all"].active { color: var(--text); border-color: var(--text); }
+  .cat-tab[data-cat="食"].active { color: var(--food); border-color: var(--food); }
+  .cat-tab[data-cat="衣"].active { color: var(--fashion); border-color: var(--fashion); }
+  .cat-tab[data-cat="住"].active { color: var(--living); border-color: var(--living); }
+  .cat-tab[data-cat="行"].active { color: var(--transport); border-color: var(--transport); }
+  .cat-tab[data-cat="育"].active { color: var(--edu); border-color: var(--edu); }
+  .cat-tab[data-cat="樂"].active { color: var(--fun); border-color: var(--fun); }
+  .cat-tab[data-cat="百貨"].active { color: var(--dept); border-color: var(--dept); }
+  .cat-tab[data-cat="🎂"].active { color: #ff8fab; border-color: #ff8fab; background: rgba(255,143,171,0.08); }
+
+  /* Status filter */
+  .status-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  .status-tab {
+    padding: 0.4rem 0.9rem;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .status-tab.active[data-status="all"] { background: var(--surface2); color: var(--text); border-color: var(--text-dim); }
+  .status-tab.active[data-status="active"] { background: rgba(6,214,160,0.1); color: var(--accent3); border-color: var(--accent3); }
+  .status-tab.active[data-status="upcoming"] { background: rgba(255,209,102,0.1); color: var(--accent2); border-color: var(--accent2); }
+  .status-tab.active[data-status="expired"] { background: rgba(255,77,109,0.08); color: var(--text-dim); border-color: var(--border); }
+
+  /* Stats strip */
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-item {
+    padding: 1rem 1.5rem;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-item:last-child { border-right: none; }
+
+  .stat-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* Main grid */
+  .main {
+    padding: 1.5rem 2rem;
+  }
+
+  .deals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+  }
+
+  /* Deal card */
+  .deal-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+    position: relative;
+    cursor: pointer;
+    animation: fadeIn 0.3s ease forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .deal-card:hover {
+    transform: translateY(-2px);
+    border-color: #3a3a4a;
+  }
+
+  .deal-card.status-active { border-left: 3px solid var(--accent3); }
+  .deal-card.status-upcoming { border-left: 3px solid var(--accent2); }
+  .deal-card.status-expired { border-left: 3px solid #333; opacity: 0.55; }
+
+  .card-header {
+    padding: 0.9rem 1rem 0.7rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .card-title-wrap { flex: 1; min-width: 0; }
+
+  .brand-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .deal-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-top: 3px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .badge-bogo { background: rgba(255,77,109,0.15); color: var(--accent); }
+  .badge-discount { background: rgba(255,209,102,0.15); color: var(--accent2); }
+  .badge-gift { background: rgba(6,214,160,0.15); color: var(--accent3); }
+  .badge-member { background: rgba(76,201,240,0.15); color: var(--accent4); }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+
+  .status-active .status-dot { background: var(--accent3); box-shadow: 0 0 6px var(--accent3); animation: pulse 2s infinite; }
+  .status-upcoming .status-dot { background: var(--accent2); }
+  .status-expired .status-dot { background: #444; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .card-body { padding: 0.8rem 1rem; }
+
+  .deal-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+  }
+
+  .deal-desc {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+  }
+
+  .deal-meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .meta-chip {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .meta-chip.date-chip { color: var(--text-dim); }
+
+  .days-left {
+    margin-left: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+  }
+
+  .days-active { color: var(--accent3); }
+  .days-soon { color: var(--accent2); }
+  .days-expired { color: #555; }
+
+  .card-footer {
+    padding: 0.6rem 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cat-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .cat-食 { color: var(--food); }
+  .cat-衣 { color: var(--fashion); }
+  .cat-住 { color: var(--living); }
+  .cat-行 { color: var(--transport); }
+  .cat-育 { color: var(--edu); }
+  .cat-樂 { color: var(--fun); }
+  .cat-百貨 { color: var(--dept); }
+
+  /* Birthday badge on card */
+  .bday-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: rgba(255,143,171,0.15);
+    color: #ff8fab;
+    margin-left: 6px;
+    letter-spacing: 0.03em;
+  }
+
+  /* Birthday panel */
+  .bday-panel {
+    margin: 0 2rem 0;
+    padding: 1.2rem 1.5rem;
+    background: rgba(255,143,171,0.04);
+    border: 1px solid rgba(255,143,171,0.2);
+    border-radius: 10px;
+    display: none;
+  }
+
+  .bday-panel.open { display: block; }
+
+  .bday-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .bday-panel-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ff8fab;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .bday-month-sel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .bday-month-sel select {
+    background: var(--surface2);
+    border: 1px solid rgba(255,143,171,0.3);
+    color: #ff8fab;
+    padding: 0.3rem 0.6rem;
+    border-radius: 5px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.82rem;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .bday-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .bday-card {
+    background: var(--surface);
+    border: 1px solid rgba(255,143,171,0.2);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    animation: fadeIn 0.3s ease forwards;
+    opacity: 0;
+  }
+
+  .bday-card-top {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .bday-brand { font-weight: 700; font-size: 0.9rem; }
+
+  .bday-title { font-size: 0.82rem; color: var(--text-dim); line-height: 1.4; }
+
+  .bday-desc { font-size: 0.75rem; color: #666; line-height: 1.4; }
+
+  .bday-cat-chip {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-dim);
+  }
+
+  .bday-empty {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    grid-column: 1/-1;
+  }
+
+  /* Birthday toggle btn in header */
+  .bday-toggle-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 0.4rem 0.85rem;
+    border-radius: 6px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .bday-toggle-btn:hover, .bday-toggle-btn.active {
+    border-color: #ff8fab;
+    color: #ff8fab;
+    background: rgba(255,143,171,0.06);
+  }
+
+  /* birthday checkbox in modal */
+  .bday-check-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 0.5rem 0;
+  }
+
+  .bday-check-row input[type=checkbox] { accent-color: #ff8fab; width: 16px; height: 16px; cursor: pointer; }
+  .bday-check-row.checked { color: #ff8fab; }
+
+  .bookmark-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 2px 4px;
+    transition: color 0.2s, transform 0.2s;
+    line-height: 1;
+  }
+
+  .bookmark-btn:hover { color: var(--accent2); transform: scale(1.2); }
+  .bookmark-btn.saved { color: var(--accent2); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-dim);
+    grid-column: 1/-1;
+  }
+
+  .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+  .empty-state p { font-size: 0.9rem; }
+
+  /* Add deal modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: translateY(20px);
+    transition: transform 0.2s;
+  }
+
+  .modal-overlay.open .modal {
+    transform: translateY(0);
+  }
+
+  .modal-header {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-header h2 { font-size: 1rem; font-weight: 700; }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+
+  .modal-close:hover { color: var(--text); }
+
+  .modal-body { padding: 1.2rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+
+  .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+
+  .form-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .form-input, .form-select, .form-textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.6rem 0.9rem;
+    border-radius: 6px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .form-select option { background: var(--surface2); }
+
+  .form-textarea { resize: vertical; min-height: 70px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 6px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    width: 100%;
+  }
+
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  /* FAB */
+  .fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: white;
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(255,77,109,0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    z-index: 50;
+  }
+
+  .fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 28px rgba(255,77,109,0.5);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.7rem 1.2rem;
+    font-size: 0.85rem;
+    z-index: 200;
+    transition: transform 0.3s;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a3a4a; }
+
+  /* Food subtype bar */
+  .subtype-bar {
+    padding: 0.6rem 2rem;
+    background: rgba(255,107,53,0.04);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .subtype-bar.hidden { display: none; }
+
+  .subtype-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--food);
+    letter-spacing: 0.1em;
+    margin-right: 0.3rem;
+  }
+
+  .sub-tab {
+    padding: 0.25rem 0.7rem;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+
+  .sub-tab:hover { border-color: var(--food); color: var(--food); }
+  .sub-tab.active { border-color: var(--food); color: var(--food); background: rgba(255,107,53,0.1); }
+  .sub-tab.living-mode:hover { border-color: var(--living); color: var(--living); }
+  .sub-tab.living-mode.active { border-color: var(--living); color: var(--living); background: rgba(79,195,247,0.1); }
+
+  .sub-group { display: contents; }
+
+  /* subtype chip on card */
+  .subtype-chip {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(255,107,53,0.12);
+    color: var(--food);
+    margin-left: 4px;
+  }
+
+  .workflow-hint {    margin: 1.5rem 2rem 0;
+    padding: 1rem 1.2rem;
+    background: rgba(76,201,240,0.05);
+    border: 1px solid rgba(76,201,240,0.2);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .workflow-hint .icon { color: var(--accent4); font-size: 1rem; flex-shrink: 0; margin-top: 2px; }
+  .workflow-hint strong { color: var(--accent4); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-tag">TW CHAIN DEALS · RADAR</span>
+    <h1>優惠<span>雷達</span></h1>
+  </div>
+  <div class="header-meta">
+    <div class="month-badge" id="curMonthBadge">載入中...</div>
+    <button class="bday-toggle-btn" id="bdayToggleBtn">🎂 壽星優惠</button>
+  </div>
+</header>
+
+<div class="stats-strip" id="statsStrip">
+  <div class="stat-item">
+    <div class="stat-num" id="statTotal" style="color:var(--text)">0</div>
+    <div class="stat-label">總筆優惠</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" id="statActive" style="color:var(--accent3)">0</div>
+    <div class="stat-label">現在可用</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" id="statUpcoming" style="color:var(--accent2)">0</div>
+    <div class="stat-label">即將開始</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" id="statBogo" style="color:var(--accent)">0</div>
+    <div class="stat-label">買一送一</div>
+  </div>
+</div>
+
+<div class="search-bar">
+  <div class="search-input-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="搜尋品牌、商品名稱...">
+  </div>
+  <div class="cat-tabs" id="catTabs">
+    <button class="cat-tab active" data-cat="all">全部</button>
+    <button class="cat-tab" data-cat="食">🍜 食</button>
+    <button class="cat-tab" data-cat="衣">👗 衣</button>
+    <button class="cat-tab" data-cat="住">🏨 住宿</button>
+    <button class="cat-tab" data-cat="行">🚗 行</button>
+    <button class="cat-tab" data-cat="育">📚 育</button>
+    <button class="cat-tab" data-cat="樂">🎉 樂</button>
+    <button class="cat-tab" data-cat="百貨">🏬 百貨</button>
+  </div>
+  <div class="status-tabs" id="statusTabs">
+    <button class="status-tab active" data-status="all">全部</button>
+    <button class="status-tab" data-status="active">● 可用</button>
+    <button class="status-tab" data-status="upcoming">◆ 即將</button>
+    <button class="status-tab" data-status="expired">— 過期</button>
+  </div>
+</div>
+
+<!-- Food subtype bar -->
+<!-- Subtype bar (食 / 住 共用) -->
+<div class="subtype-bar hidden" id="subtypeBar">
+  <span class="subtype-label" id="subtypeLabel">類型</span>
+  <button class="sub-tab active" data-sub="all">全部</button>
+  <!-- 食 subtypes -->
+  <span class="sub-group" id="subGroup食">
+    <button class="sub-tab" data-sub="便利商店">🏪 便利商店</button>
+    <button class="sub-tab" data-sub="速食">🍔 速食</button>
+    <button class="sub-tab" data-sub="咖啡廳">☕ 咖啡廳</button>
+    <button class="sub-tab" data-sub="飲料店">🧋 飲料店</button>
+    <button class="sub-tab" data-sub="火鍋">🍲 火鍋</button>
+    <button class="sub-tab" data-sub="燒肉/燒烤">🥩 燒肉/燒烤</button>
+    <button class="sub-tab" data-sub="吃到飽">🍱 吃到飽</button>
+    <button class="sub-tab" data-sub="飯店餐廳">🏨 飯店餐廳</button>
+    <button class="sub-tab" data-sub="中式/台式">🥢 中式/台式</button>
+    <button class="sub-tab" data-sub="日式料理">🍣 日式料理</button>
+    <button class="sub-tab" data-sub="西式/異國">🌮 西式/異國</button>
+    <button class="sub-tab" data-sub="餐飲集團">🏢 餐飲集團</button>
+    <button class="sub-tab" data-sub="超市/量販">🛒 超市/量販</button>
+  </span>
+  <!-- 住 subtypes -->
+  <span class="sub-group" id="subGroup住" style="display:none">
+    <button class="sub-tab" data-sub="國際飯店">🏩 國際飯店</button>
+    <button class="sub-tab" data-sub="商務旅館">🏢 商務旅館</button>
+    <button class="sub-tab" data-sub="民宿">🏡 民宿</button>
+    <button class="sub-tab" data-sub="訂房平台">📱 訂房平台</button>
+    <button class="sub-tab" data-sub="青年旅舍">🎒 青年旅舍</button>
+  </span>
+</div>
+
+<div class="workflow-hint">
+  <span class="icon">💡</span>
+  <div><strong>使用流程</strong>：每月底蒐集下個月（甚至未來數月）連鎖品牌優惠 → 點右下角 <strong>+</strong> 新增，未來日期會自動顯示「X天後開始」→ 月初轉為「可用」。建議<strong>每月底執行一次</strong>即可，穩定品牌（如威秀週二、麥當勞週三）可一次建立3~6個月。</div>
+</div>
+
+<!-- Birthday panel -->
+<div class="bday-panel" id="bdayPanel">
+  <div class="bday-panel-header">
+    <div class="bday-panel-title">🎂 壽星專屬優惠</div>
+    <div class="bday-month-sel">
+      <span>我的生日月份：</span>
+      <select id="bdayMonthSel">
+        <option value="0">— 選擇月份 —</option>
+        <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+        <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+        <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+        <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+      </select>
+    </div>
+  </div>
+  <div class="bday-grid" id="bdayGrid">
+    <div class="bday-empty">設定生日月份，自動篩選壽星優惠 🎉</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="deals-grid" id="dealsGrid"></div>
+</div>
+
+<button class="fab" id="openModal" title="新增優惠">＋</button>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>➕ 新增優惠方案</h2>
+      <button class="modal-close" id="closeModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">分類 *</label>
+          <select class="form-select" id="fCat" onchange="toggleSubtypeField()">
+            <option value="食">🍜 食</option>
+            <option value="衣">👗 衣</option>
+            <option value="住">🏨 住宿</option>
+            <option value="行">🚗 行</option>
+            <option value="育">📚 育</option>
+            <option value="樂">🎉 樂</option>
+            <option value="百貨">🏬 百貨</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">優惠類型 *</label>
+          <select class="form-select" id="fType">
+            <option value="買一送一">買一送一</option>
+            <option value="折扣優惠">折扣優惠</option>
+            <option value="贈品活動">贈品活動</option>
+            <option value="會員專屬">會員專屬</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" id="fSubtypeWrap">
+        <label class="form-label" id="fSubtypeLabel">餐廳/食品類型</label>
+        <select class="form-select" id="fSubtype">
+          <option value="">— 不指定 —</option>
+          <!-- 食 options -->
+          <optgroup label="🍜 食品類型" id="fSubOptFood">
+            <option value="便利商店">🏪 便利商店</option>
+            <option value="速食">🍔 速食</option>
+            <option value="咖啡廳">☕ 咖啡廳</option>
+            <option value="飲料店">🧋 飲料店</option>
+            <option value="火鍋">🍲 火鍋</option>
+            <option value="燒肉/燒烤">🥩 燒肉/燒烤</option>
+            <option value="吃到飽">🍱 吃到飽</option>
+            <option value="飯店餐廳">🏨 飯店餐廳</option>
+            <option value="中式/台式">🥢 中式/台式</option>
+            <option value="日式料理">🍣 日式料理</option>
+            <option value="西式/異國">🌮 西式/異國</option>
+            <option value="餐飲集團">🏢 餐飲集團</option>
+            <option value="超市/量販">🛒 超市/量販</option>
+          </optgroup>
+          <!-- 住 options -->
+          <optgroup label="🏨 住宿類型" id="fSubOptLiving" style="display:none">
+            <option value="國際飯店">🏩 國際飯店</option>
+            <option value="商務旅館">🏢 商務旅館</option>
+            <option value="民宿">🏡 民宿</option>
+            <option value="訂房平台">📱 訂房平台</option>
+            <option value="青年旅舍">🎒 青年旅舍</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">品牌名稱 *</label>
+        <input type="text" class="form-input" id="fBrand" placeholder="e.g. 星巴克、全家、路易莎">
+      </div>
+      <div class="form-group">
+        <label class="form-label">優惠標題 *</label>
+        <input type="text" class="form-input" id="fTitle" placeholder="e.g. 買一送一第二杯咖啡">
+      </div>
+      <div class="form-group">
+        <label class="form-label">說明／條件</label>
+        <textarea class="form-textarea" id="fDesc" placeholder="e.g. 限同品項、指定門市、需出示App優惠券"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">開始日期 *</label>
+          <input type="date" class="form-input" id="fStart">
+        </div>
+        <div class="form-group">
+          <label class="form-label">結束日期 *</label>
+          <input type="date" class="form-input" id="fEnd">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">來源連結</label>
+        <input type="url" class="form-input" id="fUrl" placeholder="https://...">
+      </div>
+      <label class="bday-check-row" id="bdayCheckRow">
+        <input type="checkbox" id="fBday"> 🎂 這是壽星優惠（生日當月可用）
+      </label>
+      <button class="btn-primary" id="submitDeal">確認新增</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Default seed data ───────────────────────────────────────────────
+const today = new Date();
+const y = today.getFullYear();
+const m = today.getMonth(); // 0-indexed
+
+function dateStr(year, month0, day) {
+  return `${year}-${String(month0+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+}
+
+const SEED = [
+  // ── 便利商店 ──
+  { id: 1,  cat: '食', subtype: '便利商店',  brand: '全家便利商店',    title: '壽星生日月指定咖啡買一送一', desc: '加入全家APP，生日月自動匯入「我的商品」，特濃美式(大)免費+同品項買2送1', type: '買一送一', isBday: true,  start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.family.com.tw', saved: false },
+  { id: 2,  cat: '食', subtype: '便利商店',  brand: '7-ELEVEN',        title: '指定商品買一送一',           desc: '每週不定期OPEN POINT會員買一送一活動，需先領券', type: '買一送一', isBday: false, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.7-eleven.com.tw', saved: false },
+
+  // ── 速食 ──
+  { id: 3,  cat: '食', subtype: '速食',      brand: '麥當勞',          title: '大麥克/麥辣雞腿堡買一送一', desc: '週三App限定，限外帶，每帳號限用一次', type: '買一送一', isBday: false, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.mcdonalds.com.tw', saved: false },
+  { id: 4,  cat: '食', subtype: '速食',      brand: '肯德基 KFC',      title: '壽星生日禮金50元券',         desc: '加入PK雙饗卡APP，生日前7天自動發送，60天內有效，低消79元', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.kfc.com.tw', saved: false },
+  { id: 5,  cat: '食', subtype: '速食',      brand: '必勝客 Pizza Hut', title: '壽星生日禮金50元券',        desc: '加入PK雙饗卡APP，生日前7天自動發送，60天內有效，低消79元', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.pizzahut.com.tw', saved: false },
+  { id: 6,  cat: '食', subtype: '速食',      brand: '摩斯漢堡 MOS',    title: '壽星生日優惠券',             desc: '官網/APP註冊MOS會員，生日當天系統發送生日禮優惠券', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.mos.com.tw', saved: false },
+
+  // ── 咖啡廳 ──
+  { id: 7,  cat: '食', subtype: '咖啡廳',    brand: '路易莎咖啡',      title: '壽星生日月飲品買一送一',     desc: '需在生日前3天註冊APP會員，生日券於生日當天發送，限指定飲品', type: '買一送一', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.louisa.com.tw', saved: false },
+  { id: 8,  cat: '食', subtype: '咖啡廳',    brand: 'cama café',       title: '壽星生日月飲品券',           desc: '加入會員，生日當月領取飲料折扣券', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.camacafe.com', saved: false },
+
+  // ── 飲料店 ──
+  { id: 9,  cat: '食', subtype: '飲料店',    brand: '迷客夏 Milksha',  title: '壽星生日月飲品折扣券',       desc: '加入會員，生日當月領取指定飲品折扣', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.milksha.com', saved: false },
+  { id: 10, cat: '食', subtype: '飲料店',    brand: '50嵐',            title: '珍珠奶茶第二杯半價',         desc: '限門市消費，不可與其他優惠折抵', type: '折扣優惠', isBday: false, start: dateStr(y,m,10), end: dateStr(y,m,20), url: '', saved: false },
+
+  // ── 火鍋 ──
+  { id: 11, cat: '食', subtype: '火鍋',      brand: '海底撈',          title: '壽星當日贈生日蛋糕+驚喜禮', desc: '壽星當日用餐贈生日蛋糕乙份，有拉麵秀表演，視各店活動略有不同，需當日出示證件', type: '贈品活動', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.haidilao.com/tw', saved: false },
+  { id: 12, cat: '食', subtype: '火鍋',      brand: '千葉火鍋',        title: '壽星本人最高5折優惠',        desc: '持味來普卡壽星88折，持黑卡壽星5折/同行9折。當月出示證件，需提前預約', type: '折扣優惠', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.chiba-hotpot.com', saved: false },
+  { id: 13, cat: '食', subtype: '火鍋',      brand: '聚 日式鍋物',     title: '壽星生日當天免費肉山+當月88折', desc: '王品瘋美食APP會員，生日當天打卡贈富士肉肉山；非當天憑券單人套餐88折', type: '買一送一', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.wowprime.com', saved: false },
+  { id: 14, cat: '食', subtype: '火鍋',      brand: '滿堂紅麻辣鍋',    title: '壽星當日/前後3天85折',       desc: '3人以下壽星本人85折，需持證件，生日前後3天皆可使用', type: '折扣優惠', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: '', saved: false },
+  { id: 15, cat: '食', subtype: '火鍋',      brand: '肉多多火鍋',      title: '壽星當月幾歲送幾片肉',       desc: '當月壽星享幾歲送幾片梅花豬（單點店低消$850+Google五星），需提前預約', type: '贈品活動', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: '', saved: false },
+  { id: 16, cat: '食', subtype: '火鍋',      brand: '小福利麻辣鍋',    title: '壽星當月96折優惠',           desc: '加入iEAT饗愛吃APP，每月20號發送下月壽星96折券，適用平假日', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.ieat.com.tw', saved: false },
+  { id: 17, cat: '食', subtype: '火鍋',      brand: '青花驕麻辣鍋',    title: '壽星當月贈冰心琥珀綠豆糕',   desc: '王品瘋美食APP會員，生日月憑券消費贈指定甜點', type: '贈品活動', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.wowprime.com', saved: false },
+
+  // ── 燒肉/燒烤 ──
+  { id: 18, cat: '食', subtype: '燒肉/燒烤', brand: '乾杯燒肉',        title: '壽星當日贈燒肉蛋糕',         desc: '加入KANPAI GO!CLUB會員，生日當日電子兌換券自動發送，全台門市可兌換', type: '贈品活動', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.kanpai.com.tw', saved: false },
+  { id: 19, cat: '食', subtype: '燒肉/燒烤', brand: '原燒 日式燒肉',   title: '壽星生日當天多人套餐85折',   desc: '王品瘋美食APP，生日當天憑券內用消費雙人/三人套餐85折；非當天贈松阪豬玫瑰花', type: '折扣優惠', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.wowprime.com', saved: false },
+  { id: 20, cat: '食', subtype: '燒肉/燒烤', brand: '肉次方燒肉放題',  title: '壽星當月套餐9折',            desc: '王品瘋美食APP，憑券內用進擊/強擊/究擊の肉套餐享單客9折', type: '折扣優惠', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.wowprime.com', saved: false },
+
+  // ── 吃到飽 ──
+  { id: 21, cat: '食', subtype: '吃到飽',    brand: '饗食天堂',        title: '壽星當月96折+生日獻禮',      desc: '加入iEAT饗愛吃APP，每月20號發送下月96折券及專屬生日獻禮。不適用除夕、春節初五前', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.ieat.com.tw', saved: false },
+  { id: 22, cat: '食', subtype: '吃到飽',    brand: '漢來海港',        title: '壽星當日平日8折/假日85折',   desc: '壽星出示身份證/健保卡，平日8折+原價10%服務費，假日85折+原價10%服務費。加入來美食APP另贈濾掛咖啡', type: '折扣優惠', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.hilai-foods.com', saved: true },
+  { id: 23, cat: '食', subtype: '吃到飽',    brand: '欣葉日本料理',    title: '壽星生日優惠',               desc: '生日當月可享壽星專屬優惠（2026年未調漲，詳情請確認官網），全台門市適用', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.shinyeh.com.tw', saved: false },
+  { id: 24, cat: '食', subtype: '吃到飽',    brand: '旭集',            title: '壽星當月生日獻禮兌換',        desc: '加入iEAT饗愛吃APP，壽星生日當天前後三日至旭集用餐可兌換壽星專屬生日獻禮', type: '贈品活動', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.ieat.com.tw', saved: false },
+  { id: 25, cat: '食', subtype: '吃到飽',    brand: '果然匯',          title: '壽星當月96折優惠',            desc: '加入iEAT饗愛吃APP，每月20號發送下月96折券，不限平假日（春節初五前除外）', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.ieat.com.tw', saved: false },
+  { id: 26, cat: '食', subtype: '吃到飽',    brand: 'IKEA餐廳',        title: '壽星當月主餐買一送一',        desc: '持宜家卡至IKEA任一分店，購買120元以上主餐享主餐第二道半價。兒童生日另有兒童套餐優惠', type: '買一送一', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.ikea.com/tw', saved: false },
+  { id: 27, cat: '食', subtype: '吃到飽',    brand: 'Sunny Buffet茹曦', title: '壽星當月2人同行1人半價/4人1人免費', desc: '當月壽星平日午/晚餐可選擇「2人同行1人半價」或「4人同行1人免費」，二選一', type: '折扣優惠', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: '', saved: false },
+
+  // ── 飯店餐廳 ──
+  { id: 28, cat: '食', subtype: '飯店餐廳',  brand: '漢來大飯店（全館餐廳）', title: '壽星當月各餐廳專屬好禮', desc: '加入Ocard APP，旗下東方樓/焰鐵板燒/弁慶日本料理/島語自助餐廳等各贈專屬壽星禮（壽桃/特製手捲/瑪德蓮禮盒等）', type: '贈品活動', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.grand-hilai.com.tw', saved: false },
+  { id: 29, cat: '食', subtype: '飯店餐廳',  brand: '台北花園大酒店饗聚廚房', title: '壽星當日4人同行免費/當月7折', desc: '「饗聚廚房」當日壽星4人同行1人免費，當月壽星享7折，另贈主廚精選生日蛋糕', type: '折扣優惠', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.taipei-garden.com.tw', saved: false },
+  { id: 30, cat: '食', subtype: '飯店餐廳',  brand: '台北美福大飯店彩匯',     title: '壽星4人同行1人半價',      desc: '午/晚餐4人以上同行含壽星本人，壽星享半價優惠，8人可享2人半價。10%服務費另計', type: '折扣優惠', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.grandmayfull.com', saved: false },
+  { id: 31, cat: '食', subtype: '飯店餐廳',  brand: '希爾頓台北悅．市集',     title: '壽星當月4人同行1人免費', desc: '當月壽星用餐，4人同行1人免費（8人需2名壽星），不適用連假及特殊節假日', type: '折扣優惠', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.hilton.com/tw', saved: false },
+  { id: 32, cat: '食', subtype: '飯店餐廳',  brand: '鉑麗安全日餐廳',         title: '壽星當月4人同行1人免費', desc: '四人含壽星同行，當月壽星免費（仍須付原價10%服務費），多項除外日', type: '折扣優惠', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: '', saved: false },
+
+  // ── 餐飲集團 ──
+  { id: 33, cat: '食', subtype: '餐飲集團',  brand: '王品集團（瘋美食APP）',  title: '壽星當月各品牌專屬好禮',  desc: '加入王品瘋美食APP，生日月可領各品牌壽星優惠券（西堤9折/陶板屋9折/夏慕尼88折/品田88折等），旗下20+品牌各有不同好禮', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.wowprime.com', saved: true },
+  { id: 34, cat: '食', subtype: '餐飲集團',  brand: '饗賓集團（iEAT APP）',   title: '壽星當月6大品牌各96折', desc: '加入iEAT饗愛吃APP，每月20號發放，適用饗食天堂/果然匯/小福利/開飯川食堂/饗泰多/真珠/貓將壽司等，每張限8人以下', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.ieat.com.tw', saved: false },
+  { id: 35, cat: '食', subtype: '餐飲集團',  brand: '瓦城集團（wa10 APP）',   title: '壽星當月最高300美食金',  desc: '加入wa10瓦城APP，壽星可獲$300美食金（低消$1500，平日限定），或$200美食金（平假日），大心另有$50美食金', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.wathaicity.com.tw', saved: false },
+
+  // ── 中式/台式 ──
+  { id: 36, cat: '食', subtype: '中式/台式',  brand: '鼎泰豐',         title: '壽星當月9折優惠',            desc: '持生日證明，當月生日者用餐享9折，限指定門市，需出示身份證', type: '折扣優惠', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.dintaifung.com.tw', saved: false },
+
+  // ── 日式料理 ──
+  { id: 37, cat: '食', subtype: '日式料理',   brand: '丸龜製麵',       title: '壽星當月炸物買烏龍麵買一送一', desc: '壽星當月憑券及出示證件，買炸物即享豆皮烏龍麵(中)買一送一', type: '買一送一', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.marugame-seimen.com.tw', saved: false },
+  { id: 38, cat: '食', subtype: '日式料理',   brand: '爭鮮迴轉壽司',  title: '六角美食通APP壽星8折',        desc: '下載六角美食通APP並註冊會員，壽星當月可獲得全單8折優惠券', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.sushiexpress.com.tw', saved: false },
+
+  // ── 超市/量販 ──
+  { id: 39, cat: '食', subtype: '超市/量販',  brand: '全聯福利中心',   title: '指定品項第二件5折',          desc: '限特定商品，以收銀機折扣為主，活動每月更換品項，以官網公告為準', type: '折扣優惠', isBday: false, start: dateStr(y,m,1), end: dateStr(y,m,14), url: 'https://www.pxmart.com.tw', saved: false },
+
+  // ── 衣 ──
+  { id: 40, cat: '衣', subtype: '', brand: 'NET',     title: '第二件6折優惠',         desc: '限特定商品，不含特賣品', type: '折扣優惠', isBday: false, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.net-fashion.net', saved: false },
+  { id: 41, cat: '衣', subtype: '', brand: 'UNIQLO',  title: '壽星生日月會員額外9折',  desc: '持UNIQLO會員卡，生日當月使用，限實體門市', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.uniqlo.com/tw', saved: false },
+
+  // ── 住宿 ──
+  { id: 42, cat: '住', subtype: '訂房平台',  brand: 'Agoda',        title: '台灣住宿首訂最高7折',    desc: '限台灣地區指定飯店，需登入會員帳號訂購', type: '折扣優惠', isBday: false, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.agoda.com', saved: false },
+  { id: 43, cat: '住', subtype: '國際飯店',  brand: '福容大飯店',   title: '壽星當月住宿升等+生日佈置', desc: '台北一館壽星入住享客房升等至豪華客房，贈熊好運禮盒，提供生日佈置', type: '贈品活動', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.fullon-hotels.com.tw', saved: false },
+
+  // ── 行 ──
+  { id: 44, cat: '行', subtype: '', brand: 'iRent',      title: '租車首小時免費',     desc: '限新用戶首次使用，需完成實名認證', type: '贈品活動', isBday: false, start: dateStr(y,m,1), end: dateStr(y,m,30), url: 'https://irent.hihicar.com', saved: false },
+  { id: 45, cat: '行', subtype: '', brand: 'Uber Eats',  title: '首三單免外送費',     desc: '限新用戶，指定餐廳，每單最高折100', type: '折扣優惠', isBday: false, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.ubereats.com', saved: false },
+
+  // ── 育 ──
+  { id: 46, cat: '育', subtype: '', brand: '誠品書店', title: '壽星當月全館書籍85折', desc: '持誠品會員卡，生日當月消費享折扣', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.eslitecorp.com', saved: false },
+
+  // ── 樂 ──
+  { id: 47, cat: '樂', subtype: '', brand: '威秀影城',  title: '週二電影票買一送一',    desc: '限一般廳，需透過App購票，不含特映、IMAX', type: '買一送一', isBday: false, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.vscinemas.com.tw', saved: false },
+  { id: 48, cat: '樂', subtype: '', brand: '六福村主題樂園', title: '壽星當月門票優惠690元', desc: '2026年壽星或生肖屬馬於現場購票可享優惠690元入園（原價更高），同行親友799元，至多4位', type: '折扣優惠', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.leofoo.com.tw', saved: false },
+
+  // ── 百貨 ──
+  { id: 49, cat: '百貨', subtype: '', brand: '新光三越', title: '壽星當月購物滿額加碼禮', desc: '生日月份消費滿3000元，贈壽星禮品乙份，各館活動略有不同，以官網公告為準', type: '贈品活動', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.skm.com.tw', saved: false },
+  { id: 50, cat: '百貨', subtype: '', brand: '微風廣場', title: '壽星生日月VIP 8折優惠',  desc: '持微風VIP卡，生日月消費享指定品牌8折，需事先登記', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.breeze.com.tw', saved: false },
+  { id: 51, cat: '百貨', subtype: '', brand: 'DONKI唐吉軻德', title: '壽星當月滿500折100', desc: '加入DONKI會員，生日當月可獲優惠券，消費滿500元現折100元', type: '會員專屬', isBday: true, start: dateStr(y,m,1), end: dateStr(y,m,31), url: 'https://www.donki.com/tw', saved: false },
+];
+
+// ─── State ────────────────────────────────────────────────────────────
+const DATA_VER = 'v4'; // bump this to force reload seed
+if (localStorage.getItem('tw_deals_ver') !== DATA_VER) {
+  localStorage.removeItem('tw_deals');
+  localStorage.setItem('tw_deals_ver', DATA_VER);
+}
+let deals = JSON.parse(localStorage.getItem('tw_deals') || 'null') || SEED;
+let filterCat = 'all';
+let filterStatus = 'all';
+let filterSubtype = 'all';
+let searchQ = '';
+let bdayMonth = parseInt(localStorage.getItem('tw_bdayMonth') || '0');
+
+const CAT_ICONS = { '食': '🍜', '衣': '👗', '住': '🏨', '行': '🚗', '育': '📚', '樂': '🎉', '百貨': '🏬' };
+const TYPE_MAP = {
+  '買一送一': { cls: 'badge-bogo', icon: '🔁' },
+  '折扣優惠': { cls: 'badge-discount', icon: '💰' },
+  '贈品活動': { cls: 'badge-gift', icon: '🎁' },
+  '會員專屬': { cls: 'badge-member', icon: '👑' },
+};
+
+function save() { localStorage.setItem('tw_deals', JSON.stringify(deals)); }
+
+function getStatus(start, end) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const s = new Date(start); const e = new Date(end);
+  if (now > e) return 'expired';
+  if (now < s) return 'upcoming';
+  return 'active';
+}
+
+function daysText(start, end) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const s = new Date(start); const e = new Date(end);
+  const diff = Math.round((e - now) / 86400000);
+  const diffStart = Math.round((s - now) / 86400000);
+  if (now > e) return { text: '已結束', cls: 'days-expired' };
+  if (now < s) return { text: `${diffStart}天後開始`, cls: 'days-soon' };
+  if (diff <= 3) return { text: `剩 ${diff} 天！`, cls: 'days-active' };
+  return { text: `剩 ${diff} 天`, cls: 'days-active' };
+}
+
+function renderCard(d, idx) {
+  const st = getStatus(d.start, d.end);
+  const dt = daysText(d.start, d.end);
+  const tm = TYPE_MAP[d.type] || TYPE_MAP['折扣優惠'];
+  const delay = idx * 40;
+  const subtypeHtml = ((d.cat === '食' || d.cat === '住') && d.subtype) ? `<span class="subtype-chip" style="${d.cat==='住'?'background:rgba(79,195,247,0.12);color:var(--living)':''}">${d.subtype}</span>` : '';
+  const bdayHtml = d.isBday ? `<span class="bday-badge">🎂 壽星</span>` : '';
+  return `
+  <div class="deal-card status-${st}" data-id="${d.id}" style="animation-delay:${delay}ms">
+    <div class="card-header">
+      <div class="brand-icon" style="background:rgba(255,255,255,0.05)">${CAT_ICONS[d.cat] || '🏬'}</div>
+      <div class="card-title-wrap">
+        <div class="brand-name">${d.brand}${subtypeHtml}${bdayHtml}</div>
+        <span class="deal-type-badge ${tm.cls}">${tm.icon} ${d.type}</span>
+      </div>
+      <div class="status-dot"></div>
+    </div>
+    <div class="card-body">
+      <div class="deal-title">${d.title}</div>
+      ${d.desc ? `<div class="deal-desc">${d.desc}</div>` : ''}
+      <div class="deal-meta">
+        <span class="meta-chip date-chip">📅 ${d.start} ～ ${d.end}</span>
+        <span class="days-left ${dt.cls}">${dt.text}</span>
+      </div>
+    </div>
+    <div class="card-footer">
+      <span class="cat-label cat-${d.cat}">${CAT_ICONS[d.cat] || '🏬'} ${d.cat}</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${d.url ? `<a href="${d.url}" target="_blank" style="font-size:0.7rem;color:var(--text-dim);text-decoration:none;padding:2px 6px;border:1px solid var(--border);border-radius:3px;" onclick="event.stopPropagation()">🔗 來源</a>` : ''}
+        <button class="bookmark-btn ${d.saved?'saved':''}" onclick="toggleSave(${d.id},event)" title="收藏">${d.saved?'★':'☆'}</button>
+        <button class="bookmark-btn" onclick="deleteDeal(${d.id},event)" title="刪除" style="color:#555">✕</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderBday() {
+  const grid = document.getElementById('bdayGrid');
+  if (!bdayMonth) {
+    grid.innerHTML = `<div class="bday-empty">設定生日月份，自動篩選壽星優惠 🎉</div>`;
+    return;
+  }
+  const bdayDeals = deals.filter(d => d.isBday && getStatus(d.start, d.end) !== 'expired');
+  if (!bdayDeals.length) {
+    grid.innerHTML = `<div class="bday-empty">目前尚無壽星優惠資料，請新增時勾選「壽星優惠」</div>`;
+    return;
+  }
+  grid.innerHTML = bdayDeals.map((d, i) => `
+    <div class="bday-card" style="animation-delay:${i*40}ms">
+      <div class="bday-card-top">
+        <span style="font-size:1rem">${CAT_ICONS[d.cat]||'🏬'}</span>
+        <span class="bday-brand">${d.brand}</span>
+        <span class="bday-cat-chip">${d.cat}</span>
+        <span class="deal-type-badge ${TYPE_MAP[d.type]?.cls||'badge-discount'}" style="margin-left:auto">${TYPE_MAP[d.type]?.icon||'💰'} ${d.type}</span>
+      </div>
+      <div class="bday-title">${d.title}</div>
+      ${d.desc ? `<div class="bday-desc">${d.desc}</div>` : ''}
+      ${d.url ? `<a href="${d.url}" target="_blank" style="font-size:0.7rem;color:#ff8fab;text-decoration:none;margin-top:2px;">🔗 官網連結</a>` : ''}
+    </div>
+  `).join('');
+}
+
+function renderAll() {
+  const now = new Date(); now.setHours(0,0,0,0);
+  let filtered = deals.filter(d => {
+    if (filterCat !== 'all' && d.cat !== filterCat) return false;
+    if (filterStatus !== 'all' && getStatus(d.start, d.end) !== filterStatus) return false;
+    if (filterCat === '食' && filterSubtype !== 'all' && d.subtype !== filterSubtype) return false;
+    if (filterCat === '住' && filterSubtype !== 'all' && d.subtype !== filterSubtype) return false;
+    if (searchQ) {
+      const q = searchQ.toLowerCase();
+      if (!d.brand.toLowerCase().includes(q) && !d.title.toLowerCase().includes(q) && !(d.desc||'').toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  const grid = document.getElementById('dealsGrid');
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>沒有符合的優惠方案</p></div>`;
+  } else {
+    grid.innerHTML = filtered.map((d, i) => renderCard(d, i)).join('');
+  }
+
+  // Stats
+  document.getElementById('statTotal').textContent = deals.length;
+  document.getElementById('statActive').textContent = deals.filter(d => getStatus(d.start,d.end)==='active').length;
+  document.getElementById('statUpcoming').textContent = deals.filter(d => getStatus(d.start,d.end)==='upcoming').length;
+  document.getElementById('statBogo').textContent = deals.filter(d => d.type==='買一送一').length;
+}
+
+function toggleSave(id, e) {
+  e.stopPropagation();
+  const d = deals.find(x => x.id === id);
+  if (d) { d.saved = !d.saved; save(); renderAll(); }
+}
+
+function deleteDeal(id, e) {
+  e.stopPropagation();
+  if (confirm('確認刪除這筆優惠？')) {
+    deals = deals.filter(x => x.id !== id);
+    save(); renderAll();
+    showToast('✓ 已刪除');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ─── Header date ──────────────────────────────────────────────────────
+function updateHeaderDate() {
+  const now = new Date();
+  const mn = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+  document.getElementById('curMonthBadge').innerHTML =
+    `<strong>${now.getFullYear()}</strong> 年 <strong>${mn[now.getMonth()]}</strong> 月`;
+}
+
+// ─── Filter controls ─────────────────────────────────────────────────
+document.getElementById('catTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.cat-tab');
+  if (!btn) return;
+  filterCat = btn.dataset.cat;
+  filterSubtype = 'all';
+  document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Show subtype bar for 食 and 住
+  const bar = document.getElementById('subtypeBar');
+  const showBar = filterCat === '食' || filterCat === '住';
+  bar.classList.toggle('hidden', !showBar);
+  if (showBar) {
+    // Switch visible group
+    document.getElementById('subGroup食').style.display = filterCat === '食' ? 'contents' : 'none';
+    document.getElementById('subGroup住').style.display = filterCat === '住' ? 'contents' : 'none';
+    // Update label
+    document.getElementById('subtypeLabel').textContent = filterCat === '食' ? '餐廳類型' : '住宿類型';
+    document.getElementById('subtypeLabel').style.color = filterCat === '食' ? 'var(--food)' : 'var(--living)';
+    // Color mode for tabs
+    const isLiving = filterCat === '住';
+    document.querySelectorAll('.sub-tab').forEach(t => t.classList.toggle('living-mode', isLiving));
+  }
+  // Reset subtype tabs
+  document.querySelectorAll('.sub-tab').forEach(b => b.classList.toggle('active', b.dataset.sub === 'all'));
+  renderAll();
+});
+
+document.getElementById('subtypeBar').addEventListener('click', e => {
+  const btn = e.target.closest('.sub-tab');
+  if (!btn) return;
+  filterSubtype = btn.dataset.sub;
+  document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+});
+
+document.getElementById('statusTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.status-tab');
+  if (!btn) return;
+  filterStatus = btn.dataset.status;
+  document.querySelectorAll('.status-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+});
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchQ = e.target.value.trim();
+  renderAll();
+});
+
+// ─── Modal ────────────────────────────────────────────────────────────
+document.getElementById('openModal').addEventListener('click', () => {
+  document.getElementById('modalOverlay').classList.add('open');
+  toggleSubtypeField();
+  const now = new Date();
+  document.getElementById('fStart').value = now.toISOString().split('T')[0];
+  const end = new Date(now); end.setDate(end.getDate()+30);
+  document.getElementById('fEnd').value = end.toISOString().split('T')[0];
+});
+
+document.getElementById('closeModal').addEventListener('click', () => {
+  document.getElementById('modalOverlay').classList.remove('open');
+});
+
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay'))
+    document.getElementById('modalOverlay').classList.remove('open');
+});
+
+function toggleSubtypeField() {
+  const cat = document.getElementById('fCat').value;
+  const wrap = document.getElementById('fSubtypeWrap');
+  const label = document.getElementById('fSubtypeLabel');
+  const optFood = document.getElementById('fSubOptFood');
+  const optLiving = document.getElementById('fSubOptLiving');
+  if (cat === '食') {
+    wrap.style.display = 'flex';
+    label.textContent = '餐廳/食品類型';
+    optFood.style.display = '';
+    optLiving.style.display = 'none';
+  } else if (cat === '住') {
+    wrap.style.display = 'flex';
+    label.textContent = '住宿類型';
+    optFood.style.display = 'none';
+    optLiving.style.display = '';
+  } else {
+    wrap.style.display = 'none';
+  }
+  document.getElementById('fSubtype').value = '';
+}
+
+document.getElementById('submitDeal').addEventListener('click', () => {
+  const brand = document.getElementById('fBrand').value.trim();
+  const title = document.getElementById('fTitle').value.trim();
+  const start = document.getElementById('fStart').value;
+  const end = document.getElementById('fEnd').value;
+  if (!brand || !title || !start || !end) {
+    showToast('⚠ 請填寫必填欄位');
+    return;
+  }
+  const cat = document.getElementById('fCat').value;
+  const newDeal = {
+    id: Date.now(),
+    cat,
+    subtype: (cat === '食' || cat === '住') ? document.getElementById('fSubtype').value : '',
+    brand,
+    title,
+    desc: document.getElementById('fDesc').value.trim(),
+    type: document.getElementById('fType').value,
+    isBday: document.getElementById('fBday').checked,
+    start, end,
+    url: document.getElementById('fUrl').value.trim(),
+    saved: false,
+  };
+  deals.unshift(newDeal);
+  save();
+  renderAll();
+  if (newDeal.isBday) renderBday();
+  document.getElementById('modalOverlay').classList.remove('open');
+  ['fBrand','fTitle','fDesc','fUrl'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fBday').checked = false;
+  showToast('✓ 新增成功！');
+});
+
+// ─── Birthday panel ───────────────────────────────────────────────────
+const bdayBtn = document.getElementById('bdayToggleBtn');
+const bdayPanel = document.getElementById('bdayPanel');
+const bdayMonthSel = document.getElementById('bdayMonthSel');
+
+// Restore saved month
+if (bdayMonth) bdayMonthSel.value = bdayMonth;
+
+bdayBtn.addEventListener('click', () => {
+  const isOpen = bdayPanel.classList.toggle('open');
+  bdayBtn.classList.toggle('active', isOpen);
+  if (isOpen) renderBday();
+});
+
+bdayMonthSel.addEventListener('change', () => {
+  bdayMonth = parseInt(bdayMonthSel.value);
+  localStorage.setItem('tw_bdayMonth', bdayMonth);
+  const mn = ['','一','二','三','四','五','六','七','八','九','十','十一','十二'];
+  bdayBtn.textContent = bdayMonth ? `🎂 ${mn[bdayMonth]}月壽星` : '🎂 壽星優惠';
+  renderBday();
+});
+
+// Restore btn label on load
+if (bdayMonth) {
+  const mn = ['','一','二','三','四','五','六','七','八','九','十','十一','十二'];
+  bdayBtn.textContent = `🎂 ${mn[bdayMonth]}月壽星`;
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────
+updateHeaderDate();
+renderAll();
+</script>
+</body>
+</html>
